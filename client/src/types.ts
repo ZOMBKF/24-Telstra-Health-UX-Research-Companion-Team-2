@@ -1,4 +1,4 @@
-export type BoxType = "agent" | "idea" | "research" | "summarize" | "image" | "documents" | "cartoon" | "slides" | "code" | "prd" | "devplan" | "ui" | "stitch" | "note" | "label" | "timer" | "custom";
+export type BoxType = "agent" | "idea" | "research" | "summarize" | "image" | "documents" | "cartoon" | "slides" | "code" | "prd" | "devplan" | "ui" | "stitch" | "note" | "label" | "timer" | "custom" | "swot";
 
 export type BoxStatus = "idle" | "running" | "done" | "error";
 
@@ -392,6 +392,22 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultWidth: 260,
     defaultHeight: 190,
   },
+  swot: {
+    label: "SWOT",
+    icon: "📊",
+    color: "#cff916",
+    description: "Generate a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) from research.",
+    hasAI: true,
+    category: "worker",
+    roles: ["product"],
+    defaultPrompt:
+      "Create a SWOT analysis based on the following research. Identify the key Strengths, Weaknesses, Opportunities, and Threats. Format as Markdown with clear headings for each section.\n\nResearch:\n{{inputs}}",
+    defaultSystemPrompt:
+      "You are a business analyst. Create a clear, structured SWOT analysis from research data. Format as Markdown with headings for Strengths, Weaknesses, Opportunities, and Threats. Be concise and actionable.",
+    defaultWidth: 320,
+    defaultHeight: 320,
+
+  },
   custom: {
     label: "Custom",
     icon: "✨",
@@ -405,6 +421,7 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultWidth: 320,
     defaultHeight: 320,
   },
+
 };
 
 /** Preset pill colors for Label boxes (index 0 = default). */

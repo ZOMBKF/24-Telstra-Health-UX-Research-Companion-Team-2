@@ -283,12 +283,12 @@ export const useBoardStore = create<BoardState>()(
               // author (set once at creation, shown under the note text).
               ...(type === "note"
                 ? {
-                    authorEmail: useAuthStore.getState().user?.email || "",
-                    authorName:
-                      useAuthStore.getState().user?.displayName ||
-                      useAuthStore.getState().user?.email ||
-                      "Someone",
-                  }
+                  authorEmail: useAuthStore.getState().user?.email || "",
+                  authorName:
+                    useAuthStore.getState().user?.displayName ||
+                    useAuthStore.getState().user?.email ||
+                    "Someone",
+                }
                 : null),
             },
           },
@@ -712,7 +712,7 @@ export const useBoardStore = create<BoardState>()(
         const user = useAuthStore.getState().user;
         if (!state.currentBoardId || !user) return;
         if (presenceTimer) { clearTimeout(presenceTimer); presenceTimer = null; }
-        removePresence(state.currentBoardId, user.uid).catch(() => {});
+        removePresence(state.currentBoardId, user.uid).catch(() => { });
       },
 
       runBox: async (id) => {
@@ -816,7 +816,14 @@ export const useBoardStore = create<BoardState>()(
               }
             }
 
-            if (boxType === "slides") {
+            if (boxType === "swot") {
+              // SWOT uses the standard Markdown text returned by the AI.
+              get().updateBoxData(id, {
+                output: result.content,
+                status: "done",
+                error: undefined,
+              });
+            } else if (boxType === "slides") {
               // Parse the LLM's JSON output into a slide deck
               const slides = parseSlidesResponse(result.content);
               get().updateBoxData(id, {
@@ -1068,9 +1075,8 @@ async function runAgentLoop(agentId: string) {
 
         pushStep({ type: "add_box", label: describeAction(action) + ` · ref ${ref}`, boxId: newId });
         steps.push(`${describeAction(action)} (ref ${ref}) — ok`);
-        lastResult = `Created ${ref} → "${title}" (${action.boxType}).${
-          action.prompt ? " Its prompt was set." : ""
-        } Connect it or run it when ready.`;
+        lastResult = `Created ${ref} → "${title}" (${action.boxType}).${action.prompt ? " Its prompt was set." : ""
+          } Connect it or run it when ready.`;
         continue;
       }
 
