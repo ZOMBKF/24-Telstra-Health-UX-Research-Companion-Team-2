@@ -39,6 +39,7 @@ const nodeTypes = {
   note: BoxNode,
   label: BoxNode,
   timer: BoxNode,
+  swot: BoxNode,
   area: AreaNode,
   custom: BoxNode,
 };
@@ -213,6 +214,7 @@ export default function Canvas() {
             note: "#fbbf24",
             label: "#64748b",
             timer: "#06b6d4",
+            swot: "#f59e0b",
           };
           if (node.type === "area") {
             // Areas are near-white on the minimap — use their border shade.
