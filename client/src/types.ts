@@ -1,4 +1,4 @@
-export type BoxType = "agent" | "idea" | "research" | "summarize" | "image" | "documents" | "cartoon" | "slides" | "code" | "prd" | "devplan" | "ui" | "stitch" | "note" | "label" | "timer" | "custom" | "swot";
+export type BoxType = "agent" | "idea" | "research" | "summarize" | "image" | "documents" | "cartoon" | "slides" | "code" | "prd" | "devplan" | "ui" | "stitch" | "note" | "label" | "timer" | "custom" | "swot" | "edge_case";
 
 export type BoxStatus = "idle" | "running" | "done" | "error";
 
@@ -406,8 +406,25 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
       "You are a business analyst. Create a clear, structured SWOT analysis from research data. Format as Markdown with headings for Strengths, Weaknesses, Opportunities, and Threats. Be concise and actionable.",
     defaultWidth: 320,
     defaultHeight: 320,
-
   },
+
+  edge_case: {
+    label: "Edge Case",
+    icon: "",
+    color: "#d8b4fe",
+    description: "Generate edge cases, error states, recovery actions, and user-friendly messages for an interaction flow.",
+    hasAI: true,
+    category: "worker",
+    roles: ["designer"],
+    defaultPrompt:
+      "Analyse the following happy-path interaction flow and identify important edge cases. Include system or network failures, clinical or data validation issues, user-context problems, and accessibility concerns. For each edge case, provide the trigger, severity, expected system behaviour, recommended recovery action, user-facing error message, and accessibility consideration. Use plain English and do not invent patient or clinical information.\n\nHappy-path flow:\n{{inputs}}",
+    defaultSystemPrompt:
+      'You are a healthcare UX specialist. Identify realistic edge cases without giving medical advice or inventing patient data. Write empathetic, non-blaming messages in plain English, and always provide a clear next step. Return ONLY valid JSON using this structure: {"edgeCases":[{"category":"System/Technical | Clinical/Data | User Context | Accessibility","edgeCase":"Short description","trigger":"What causes it","severity":"Low | Medium | High | Critical","systemResponse":"What the system should do","recoveryAction":"What the user can do next","userMessage":"Exact message shown to the user","accessibility":"Accessibility requirement"}]}. Do not include Markdown fences or text outside the JSON.',
+    defaultWidth: 420,
+    defaultHeight: 420,
+  },
+
+
   custom: {
     label: "Custom",
     icon: "✨",

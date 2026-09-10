@@ -1,3 +1,9 @@
+/**
+ * References:
+ * React Flow custom nodes: https://reactflow.dev/learn/customization/custom-nodes
+ * React Flow MiniMap: https://reactflow.dev/api-reference/components/minimap
+ */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -22,6 +28,7 @@ import BoxNode from "./BoxNode.js";
 import AreaNode from "./AreaNode.js";
 import Cursors from "./Cursors.js";
 
+//Used to display the box on canvas 
 const nodeTypes = {
   agent: BoxNode,
   idea: BoxNode,
@@ -40,6 +47,7 @@ const nodeTypes = {
   label: BoxNode,
   timer: BoxNode,
   swot: BoxNode,
+  edge_case: BoxNode,
   area: AreaNode,
   custom: BoxNode,
 };
@@ -215,6 +223,7 @@ export default function Canvas() {
             label: "#64748b",
             timer: "#06b6d4",
             swot: "#f59e0b",
+            edge_case: "#d8b4fe",
           };
           if (node.type === "area") {
             // Areas are near-white on the minimap — use their border shade.
