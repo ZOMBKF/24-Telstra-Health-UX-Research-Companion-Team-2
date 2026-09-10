@@ -1,3 +1,10 @@
+/**
+ * Reference:
+ * React conditional rendering documentation: https://react.dev/learn/conditional-rendering
+ * This source helped with showing a custom icon and name when
+ * the box type is "edge_case", while keeping the normal display for all other box types.
+ */
+
 import { useState } from "react";
 import { useBoardStore } from "../store/boardStore.js";
 import { useUserBoxesStore } from "../store/userBoxesStore.js";
@@ -126,15 +133,30 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                       onClick={() => handleAdd(type)}
                       className="w-full flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 rounded-lg border border-slate-200/70 bg-white text-left transition hover:border-slate-300 hover:shadow-sm"
                       title={meta.description}
+
+
                     >
-                      <span
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                        style={{ backgroundColor: meta.color + "1F" }}
-                      >
-                        {meta.icon}
-                      </span>
+                      {/* This uses our custom warning symbol for the Edge Case Finder.
+                          All other boxes use their normal icon. */}
+                      {type === "edge_case" ? (
+                        <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-pink-300">
+                          <span className="text-[12px] leading-none text-black">▲</span>
+                          <span className="absolute mt-[2px] text-[7px] font-bold text-pink-300">
+                            !
+                          </span>
+                        </span>
+                      ) : (
+                        <span
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                          style={{ backgroundColor: meta.color + "1F" }}
+                        >
+                          {meta.icon}
+                        </span>
+                      )}
+
                       <span className="flex-1 text-[13px] font-medium text-slate-700 truncate">
-                        {meta.label}
+                        {/* This gives the box a different name in the sidebar only */}
+                        {type === "edge_case" ? "Edge case Finder" : meta.label}
                       </span>
                     </button>
                   ))}

@@ -1,3 +1,9 @@
+/**
+ * References:
+ * JavaScript if...else: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else
+ * JavaScript logical OR: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_OR
+ */
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -816,13 +822,22 @@ export const useBoardStore = create<BoardState>()(
               }
             }
 
-            if (boxType === "swot") {
-              // SWOT uses the standard Markdown text returned by the AI.
+            // Checks which type of box is currently running.
+            const isSwotBox = boxType === "swot";
+            const isEdgeCaseBox = boxType === "edge_case";
+
+            // SWOT and Edge Case boxes both save the AI response as text.
+            // The Edge Case JSON is formatted later in BoxNode.tsx.
+            if (isSwotBox || isEdgeCaseBox) {
               get().updateBoxData(id, {
+                // This saves the response returned by the AI.
                 output: result.content,
+                // This marks the box as successfully completed.
                 status: "done",
+                // This removes any previous error.
                 error: undefined,
               });
+
             } else if (boxType === "slides") {
               // Parse the LLM's JSON output into a slide deck
               const slides = parseSlidesResponse(result.content);
