@@ -78,6 +78,40 @@ function parseEdgeCases(output: string): EdgeCaseItem[] {
   }
 }
 
+// Choose the colour of the severity badge.
+function getSeverityStyle(severity: EdgeCaseItem["severity"]): string {
+  if (severity === "Critical") {
+    return "bg-red-800 text-white";
+  }
+
+  if (severity === "High") {
+    return "bg-red-100 text-red-700";
+  }
+
+  if (severity === "Medium") {
+    return "bg-yellow-100 text-yellow-700";
+  }
+
+  return "bg-green-100 text-green-700";
+}
+
+// Choose the left-border colour of each edge-case card.
+function getSeverityBorder(severity: EdgeCaseItem["severity"]): string {
+  if (severity === "Critical") {
+    return "border-l-red-800";
+  }
+
+  if (severity === "High") {
+    return "border-l-red-500";
+  }
+
+  if (severity === "Medium") {
+    return "border-l-yellow-500";
+  }
+
+  return "border-l-green-500";
+}
+
 /**
  * Reads an image File, resizes it to max 1024px, and returns a compressed
  * JPEG data URL. Keeps localStorage and API payloads small.
@@ -479,7 +513,10 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
       />
       <div
         className={"box-node" + (selected ? " selected" : "")}
-        style={{ borderColor: meta.color }}
+        style={{
+          borderColor: meta.color,
+          borderWidth: isEdgeCase ? "2px" : undefined,
+        }}
       >
         {/* Target handle (input) — AI boxes only (not input/utility boxes) */}
         {!isInputBox && !isUtility && (
@@ -554,7 +591,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
         </div>
 
         {/* Body */}
-        <div className="px-3 py-2 flex-1 min-h-0 overflow-y-auto">
+        <div className="px-3 py-2 flex-1 min-h-0 overflow-y-auto" >
           {/* Timer box (collab) — the only collaboration box rendered inside the
             standard card; note/label early-return above as annotations. */}
           {/* Timer box — shared countdown clock, synced via the board doc */}
@@ -998,72 +1035,100 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               )}
 
               {hasError && !isRunning && (
-                <div className="rounded-lg bg-red-50 p-2 text-sm text-red-500">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-600">
                   ⚠️ {boxData.error}
                 </div>
               )}
 
               {hasTextOutput && !isRunning && edgeCases.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {/* Creates one displayed section for each generated edge case */}
                   {edgeCases.map((item, index) => (
                     <div
                       key={index}
-                      className="border-b border-slate-200 py-3 last:border-b-0"
+                      className={
+                        "rounded-md border border-slate-200 border-l-4 bg-white p-3 shadow-sm " +
+                        getSeverityBorder(item.severity)
+                      }
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <strong className="text-sm text-slate-900">
+                      <div className="flex items-start justify-between gap-3">
+                        <strong className="text-sm text-slate-800">
                           {item.edgeCase}
                         </strong>
 
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${item.severity?.toLowerCase() === "critical"
-                            ? "bg-red-800 text-white"
-                            : item.severity?.toLowerCase() === "high"
-                              ? "bg-red-200 text-red-800"
-                              : item.severity?.toLowerCase() === "medium"
-                                ? "bg-yellow-200 text-yellow-800"
-                                : "bg-green-200 text-green-800"
-                            }`}
+                          className={
+                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " +
+                            getSeverityStyle(item.severity)
+                          }
                         >
                           {item.severity}
                         </span>
                       </div>
 
-                      <div className="mb-2 text-xs text-purple-600">
+                      {/* Category */}
+                      <p className="mt-1 text-xs font-medium text-red-500">
                         {item.category}
+                      </p>
+
+                      {/* Main information */}
+                      <div className="mt-2 space-y-1 text-xs leading-relaxed text-slate-600">
+                        <p>
+                          <strong className="text-slate-700">Trigger:</strong>{" "}
+                          {item.trigger}
+                        </p>
+
+                        <p>
+                          <strong className="text-slate-700">System response:</strong>{" "}
+                          {item.systemResponse}
+                        </p>
+
+                        <p>
+                          <strong className="text-slate-700">Recovery:</strong>{" "}
+                          {item.recoveryAction}
+                        </p>
                       </div>
 
-                      <div className="space-y-1 text-xs text-slate-700">
-                        <p><strong>Trigger:</strong> {item.trigger}</p>
-                        <p><strong>System response:</strong> {item.systemResponse}</p>
-                        <p><strong>Recovery:</strong> {item.recoveryAction}</p>
-                        <p><strong>User message:</strong> “{item.userMessage}”</p>
-                        <p><strong>Accessibility:</strong> {item.accessibility}</p>
+                      {/* Highlighted message shown to the user */}
+                      <div className="mt-2 rounded bg-blue-50 px-2 py-1.5 text-xs text-blue-700">
+                        <strong>User message:</strong> “{item.userMessage}”
                       </div>
+
+                      {/* Accessibility information */}
+                      <p className="mt-2 text-xs text-slate-500">
+                        <strong>Accessibility:</strong> {item.accessibility}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
 
+              {/* AI returned text that could not be converted to cards */}
               {hasTextOutput && !isRunning && edgeCases.length === 0 && (
-                <div className="rounded-lg bg-amber-50 p-2 text-sm text-amber-700">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-700">
                   The AI response could not be formatted. Click Run to try again.
                 </div>
               )}
 
-              {!hasTextOutput && !isRunning && !hasError && connectedInputs.length === 0 && (
-                <div className="py-4 text-center text-sm text-slate-600">
-                  Connect an Idea Box to generate edge cases.
-                </div>
-              )}
+              {/* No box is connected */}
+              {!hasTextOutput &&
+                !isRunning &&
+                !hasError &&
+                connectedInputs.length === 0 && (
+                  <div className="py-4 text-center text-sm text-slate-600">
+                    Connect an Idea or Documents Box to generate edge cases.
+                  </div>
+                )}
 
-              {/* Tells the user that the box is connected and ready */}
-              {!hasTextOutput && !isRunning && !hasError && connectedInputs.length > 0 && (
-                <div className="py-4 text-center text-sm text-slate-600">
-                  Ready to generate edge cases. Click Run to begin.
-                </div>
-              )}
+              {/* An input box is connected */}
+              {!hasTextOutput &&
+                !isRunning &&
+                !hasError &&
+                connectedInputs.length > 0 && (
+                  <div className="py-4 text-center text-sm text-slate-600">
+                    Ready to generate edge cases. Click Run to begin.
+                  </div>
+                )}
             </div>
           )}
 
