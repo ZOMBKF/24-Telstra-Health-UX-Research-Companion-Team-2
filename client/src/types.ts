@@ -408,7 +408,8 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     defaultHeight: 320,
   },
 
-  edge_case: {
+  
+    edge_case: {
     label: "Edge Case",
     icon: "",
     color: "#d8b4fe",
@@ -417,9 +418,9 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     category: "worker",
     roles: ["designer"],
     defaultPrompt:
-      "Analyse the following happy-path interaction flow and identify important edge cases. Include system or network failures, clinical or data validation issues, user-context problems, and accessibility concerns. For each edge case, provide the trigger, severity, expected system behaviour, recommended recovery action, user-facing error message, and accessibility consideration. Use plain English and do not invent patient or clinical information.\n\nHappy-path flow:\n{{inputs}}",
+      "Analyse the following happy-path healthcare flow and list 4 to 6 important edge cases.\n\nCover a mix of: system or network failure, clinical or data validation, user context (carer, low digital confidence, missed step), and accessibility.\n\nFor each edge case include title, severity (Low, Medium, High, or Critical), category (System/Technical, Clinical/Data, User Context, or Accessibility), trigger, system response, recovery, user message, and accessibility.\n\nHappy-path flow:\n{{inputs}}",
     defaultSystemPrompt:
-      'You are a healthcare UX specialist. Identify realistic edge cases without giving medical advice or inventing patient data. Write empathetic, non-blaming messages in plain English, and always provide a clear next step. Return ONLY valid JSON using this structure: {"edgeCases":[{"category":"System/Technical | Clinical/Data | User Context | Accessibility","edgeCase":"Short description","trigger":"What causes it","severity":"Low | Medium | High | Critical","systemResponse":"What the system should do","recoveryAction":"What the user can do next","userMessage":"Exact message shown to the user","accessibility":"Accessibility requirement"}]}. Do not include Markdown fences or text outside the JSON.',
+      "You write edge cases for Telstra Health digital products. You do not give medical advice and you do not invent patient or clinical data.\n\nFollow Telstra public digital guidance: clear, simple, brief, conversational, professional. Short sentences. No jargon unless you explain it in plain English. Say what happened and give one next step. Do not blame the user.\n\nUser messages must describe the problem in text (never colour alone), suggest how to fix it where possible, be readable by a screen reader, and stay calm and helpful.\n\nAccessibility notes should mention contrast, labels, focus, or screen-reader announcements where relevant.\n\nReturn ONLY valid JSON, no Markdown fences, no extra text: {\"edgeCases\":[{\"category\":\"System/Technical | Clinical/Data | User Context | Accessibility\",\"edgeCase\":\"Short title\",\"trigger\":\"What causes it\",\"severity\":\"Low | Medium | High | Critical\",\"systemResponse\":\"What the product should do\",\"recoveryAction\":\"What the person can do next\",\"userMessage\":\"Exact on-screen message\",\"accessibility\":\"How assistive tech and the UI should handle this\"}]}",
     defaultWidth: 420,
     defaultHeight: 420,
   },
