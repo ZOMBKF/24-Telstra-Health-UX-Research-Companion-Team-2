@@ -5,11 +5,15 @@
  * Converting JSON text into JavaScript data: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse
  * Handling errors with try and catch: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
  * React useState: https://react.dev/reference/react/useState
- *  React event handlers and onClick: https://react.dev/learn/responding-to-events
+ * React event handlers and onClick: https://react.dev/learn/responding-to-events
  * Clipboard writeText: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText
  * JavaScript setTimeout: https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout
  * SVG rectangle element: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/rect
- * 
+ * React updating arrays in state: https://react.dev/learn/updating-arrays-in-state
+ * React rendering and filtering lists: https://react.dev/learn/rendering-lists 
+ * SVG circle: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/circle
+ * JavaScript Array includes: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes
+ * SVG path: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/path 
 */
 
 import { memo, useState, useRef, useEffect, lazy, Suspense } from "react";
