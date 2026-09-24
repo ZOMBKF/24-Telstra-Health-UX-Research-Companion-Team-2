@@ -185,9 +185,14 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const [codeTab, setCodeTab] = useState<"code" | "preview">("preview");
   const [codeMaximized, setCodeMaximized] = useState(false);
   const [copied, setCopied] = useState(false);
-  // stores which edge case card was copied.
+
+  // stores which edge case card was copied
   // null means no card is currently showing "Copied!"
   const [copiedEdgeCaseIndex, setCopiedEdgeCaseIndex] = useState<number | null>(null);
+
+  // stores the index of each dismissed edge case card.
+  const [dismissedEdgeCaseIndexes, setDismissedEdgeCaseIndexes] = useState<number[]>([]);
+
   const [previewLoading, setPreviewLoading] = useState(false);
   // Documents box: how many files are mid-extraction right now (transient UI
   // state — the durable results live in boxData.documents).
@@ -266,6 +271,11 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boxData?.code, boxType]);
+
+  // show all cards again when the AI produces new output
+  useEffect(() => {
+    setDismissedEdgeCaseIndexes([]);
+  }, [boxData?.output]);
 
   if (!boxData) return null;
 
@@ -403,6 +413,14 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const edgeCases = isEdgeCase && hasTextOutput
     ? parseEdgeCases(boxData.output)
     : [];
+  // Keeps each card's original index, but hides dismissed cards
+  const visibleEdgeCases = edgeCases
+    .map((item, index) => {
+      return { item, index };
+    })
+    .filter((edgeCase) => {
+      return !dismissedEdgeCaseIndexes.includes(edgeCase.index);
+    });
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -498,7 +516,6 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     item: EdgeCaseItem,
     index: number
   ) => {
-
     // Copies the edge case card info as readable plain text
     const text =
       item.edgeCase + "\n" +
@@ -524,6 +541,19 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     }
   };
 
+  // removes one selected edge case from the displayed results.
+  const handleDismissEdgeCase = (index: number) => {
+    setDismissedEdgeCaseIndexes((currentIndexes) => {
+      return [...currentIndexes, index];
+    });
+
+    // removes the Copied message if this card was copied.
+    if (copiedEdgeCaseIndex === index) {
+      setCopiedEdgeCaseIndex(null);
+    }
+  };
+
+  // copies to the code to the clipboard 
   const handleCopyCode = async () => {
     if (!boxData.code) return;
     const ok = await copyToClipboard(boxData.code);
@@ -532,13 +562,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
+  // downloads the code as an HTML file
   const handleDownloadCode = () => {
     if (!boxData.code) return;
     const html = wrapCodeInHtml(boxData.code);
     downloadHtml(html);
   };
-
   const handleOpenStackBlitz = () => {
     if (!boxData.code) return;
     sdk.openProject(toStackBlitzProject(boxData.code));
@@ -1083,7 +1112,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               {hasTextOutput && !isRunning && edgeCases.length > 0 && (
                 <div className="space-y-2">
                   {/* Creates one displayed section for each generated edge case */}
-                  {edgeCases.map((item, index) => (
+                  {visibleEdgeCases.map(({ item, index }) => (
                     <div
                       key={index}
                       className={
@@ -1147,6 +1176,33 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                             </svg>
                           </button>
 
+                          {/* Dismiss this edge case */}
+                          <button
+                            type="button"
+                            onClick={() => handleDismissEdgeCase(index)}
+                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                            title="Dismiss edge case"
+                            aria-label={`Dismiss ${item.edgeCase}`}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            >
+                              {/* Circle around the X */}
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                              />
+
+                              {/* X inside the circle */}
+                              <path d="M9 9l6 6M15 9l-6 6" />
+                            </svg>
+                          </button>
                           {/* Severity remains visible and unchanged */}
                           <span
                             className={
