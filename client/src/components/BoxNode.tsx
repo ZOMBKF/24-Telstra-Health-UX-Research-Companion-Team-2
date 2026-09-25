@@ -1101,15 +1101,28 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           {!isInputBox && isEdgeCase && (
             <div className="min-h-[80px]">
               {isRunning && (
-                <div className="flex items-center justify-center gap-2 py-4 text-sm text-slate-400">
-                  <span className="animate-spin">⏳</span>
-                  <span>Finding edge cases...</span>
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
+                  <div className="h-14 w-14 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
+                  <p className="text-base font-semibold text-slate-900">
+                    Generating Edge Cases...
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Please wait while we analyse your idea
+                  </p>
                 </div>
               )}
 
               {hasError && !isRunning && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-600">
-                  ⚠️ {boxData.error}
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-3xl font-bold text-white">
+                    !
+                  </div>
+                  <p className="text-base font-semibold text-slate-900">
+                    Couldn't Generate Edge Cases
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Something went wrong. Please try again
+                  </p>
                 </div>
               )}
 
@@ -1256,10 +1269,26 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                 </div>
               )}
 
-              {/* AI returned text that could not be converted to cards */}
+              {/* Empty: AI finished but no edge cases came back */}
               {hasTextOutput && !isRunning && edgeCases.length === 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-700">
-                  The AI response could not be formatted. Click Run to try again.
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-12 w-12 text-purple-400"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    aria-hidden="true"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                  </svg>
+                  <p className="text-base font-semibold text-slate-900">
+                    No Edge Cases Found
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Try adding more detail to your idea then generate again
+                  </p>
                 </div>
               )}
 
@@ -1529,7 +1558,17 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition disabled:opacity-50"
               style={{ backgroundColor: meta.color }}
             >
-              {isRunning ? (isAgent ? "⏳ Working…" : "⏳ Running...") : ("▶ Run")}
+              {isRunning
+                ? isEdgeCase
+                  ? "Generating..."
+                  : isAgent
+                    ? "⏳ Working…"
+                    : "⏳ Running..."
+                : isEdgeCase && hasError
+                  ? "Try Again"
+                  : isEdgeCase && hasTextOutput && edgeCases.length === 0
+                    ? "Run Again"
+                    : "▶ Run"}
             </button>
             {isAgent && isRunning && (
               <button
