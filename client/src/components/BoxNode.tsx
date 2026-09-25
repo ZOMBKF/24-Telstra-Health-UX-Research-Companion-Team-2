@@ -4,6 +4,16 @@
  * React rendering lists with map(): https://react.dev/learn/rendering-lists
  * Converting JSON text into JavaScript data: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse
  * Handling errors with try and catch: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
+ * React useState: https://react.dev/reference/react/useState
+ * React event handlers and onClick: https://react.dev/learn/responding-to-events
+ * Clipboard writeText: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText
+ * JavaScript setTimeout: https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout
+ * SVG rectangle element: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/rect
+ * React updating arrays in state: https://react.dev/learn/updating-arrays-in-state
+ * React rendering and filtering lists: https://react.dev/learn/rendering-lists 
+ * SVG circle: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/circle
+ * JavaScript Array includes: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes
+ * SVG path: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/path 
 */
 
 import { memo, useState, useRef, useEffect, lazy, Suspense } from "react";
@@ -179,6 +189,14 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const [codeTab, setCodeTab] = useState<"code" | "preview">("preview");
   const [codeMaximized, setCodeMaximized] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // stores which edge case card was copied
+  // null means no card is currently showing "Copied!"
+  const [copiedEdgeCaseIndex, setCopiedEdgeCaseIndex] = useState<number | null>(null);
+
+  // stores the index of each dismissed edge case card.
+  const [dismissedEdgeCaseIndexes, setDismissedEdgeCaseIndexes] = useState<number[]>([]);
+
   const [previewLoading, setPreviewLoading] = useState(false);
   // Documents box: how many files are mid-extraction right now (transient UI
   // state — the durable results live in boxData.documents).
@@ -257,6 +275,11 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boxData?.code, boxType]);
+
+  // show all cards again when the AI produces new output
+  useEffect(() => {
+    setDismissedEdgeCaseIndexes([]);
+  }, [boxData?.output]);
 
   if (!boxData) return null;
 
@@ -394,6 +417,14 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   const edgeCases = isEdgeCase && hasTextOutput
     ? parseEdgeCases(boxData.output)
     : [];
+  // Keeps each card's original index, but hides dismissed cards
+  const visibleEdgeCases = edgeCases
+    .map((item, index) => {
+      return { item, index };
+    })
+    .filter((edgeCase) => {
+      return !dismissedEdgeCaseIndexes.includes(edgeCase.index);
+    });
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -484,6 +515,49 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
     updateBoxData(id, { documents: existing.filter((d) => d.id !== docId) });
   };
 
+  // Copy one selected edge case to the clipboard
+  const handleCopyEdgeCase = async (
+    item: EdgeCaseItem,
+    index: number
+  ) => {
+    // Copies the edge case card info as readable plain text
+    const text =
+      item.edgeCase + "\n" +
+      "Category: " + item.category + "\n" +
+      "Severity: " + item.severity + "\n" +
+      "Trigger: " + item.trigger + "\n" +
+      "System response: " + item.systemResponse + "\n" +
+      "Recovery: " + item.recoveryAction + "\n" +
+      "User message: " + item.userMessage + "\n" +
+      "Accessibility: " + item.accessibility;
+
+    // Use the project's existing clipboard helper
+    const copyWorked = await copyToClipboard(text);
+
+    if (copyWorked) {
+      // Show "Copied!" only on the selected card
+      setCopiedEdgeCaseIndex(index);
+
+      // Remove the confirmation after two seconds
+      setTimeout(() => {
+        setCopiedEdgeCaseIndex(null);
+      }, 2000);
+    }
+  };
+
+  // removes one selected edge case from the displayed results.
+  const handleDismissEdgeCase = (index: number) => {
+    setDismissedEdgeCaseIndexes((currentIndexes) => {
+      return [...currentIndexes, index];
+    });
+
+    // removes the Copied message if this card was copied.
+    if (copiedEdgeCaseIndex === index) {
+      setCopiedEdgeCaseIndex(null);
+    }
+  };
+
+  // copies to the code to the clipboard 
   const handleCopyCode = async () => {
     if (!boxData.code) return;
     const ok = await copyToClipboard(boxData.code);
@@ -492,13 +566,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
+  // downloads the code as an HTML file
   const handleDownloadCode = () => {
     if (!boxData.code) return;
     const html = wrapCodeInHtml(boxData.code);
     downloadHtml(html);
   };
-
   const handleOpenStackBlitz = () => {
     if (!boxData.code) return;
     sdk.openProject(toStackBlitzProject(boxData.code));
@@ -1043,7 +1116,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
               {hasTextOutput && !isRunning && edgeCases.length > 0 && (
                 <div className="space-y-2">
                   {/* Creates one displayed section for each generated edge case */}
-                  {edgeCases.map((item, index) => (
+                  {visibleEdgeCases.map(({ item, index }) => (
                     <div
                       key={index}
                       className={
@@ -1052,18 +1125,98 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                       }
                     >
                       <div className="flex items-start justify-between gap-3">
+                        {/* Edge-case title */}
                         <strong className="text-sm text-slate-800">
                           {item.edgeCase}
                         </strong>
 
-                        <span
-                          className={
-                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " +
-                            getSeverityStyle(item.severity)
-                          }
-                        >
-                          {item.severity}
-                        </span>
+                        {/* Copy control and severity badge */}
+                        <div className="flex shrink-0 items-center gap-2">
+                          {/* Confirmation for the selected card */}
+                          {copiedEdgeCaseIndex === index && (
+                            <span
+                              className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700"
+                              role="status"
+                            >
+                              ✓ Copied!
+                            </span>
+                          )}
+
+                          {/* Copy this edge case */}
+                          <button
+                            type="button"
+                            onClick={() => handleCopyEdgeCase(item, index)}
+                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                            title="Copy edge case"
+                            aria-label={`Copy ${item.edgeCase}`}
+                          >
+                            {/* Copy icon */}
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            >
+                              {/* Back square */}
+                              <rect
+                                x="2"
+                                y="2"
+                                width="12"
+                                height="12"
+                                rx="1.5"
+                              />
+
+                              {/* Front square */}
+                              <rect
+                                x="8"
+                                y="8"
+                                width="12"
+                                height="12"
+                                rx="1.5"
+                                fill="white"
+                              />
+                            </svg>
+                          </button>
+
+                          {/* Dismiss this edge case */}
+                          <button
+                            type="button"
+                            onClick={() => handleDismissEdgeCase(index)}
+                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                            title="Dismiss edge case"
+                            aria-label={`Dismiss ${item.edgeCase}`}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            >
+                              {/* Circle around the X */}
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                              />
+
+                              {/* X inside the circle */}
+                              <path d="M9 9l6 6M15 9l-6 6" />
+                            </svg>
+                          </button>
+                          {/* Severity remains visible and unchanged */}
+                          <span
+                            className={
+                              "rounded-full px-2 py-0.5 text-[10px] font-medium " +
+                              getSeverityStyle(item.severity)
+                            }
+                          >
+                            {item.severity}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Category */}
