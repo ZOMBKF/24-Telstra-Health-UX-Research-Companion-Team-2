@@ -487,7 +487,6 @@ export const useBoardStore = create<BoardState>()(
       loadBoardFromFirestore: async (boardId) => {
         const board = await loadBoard(boardId);
         if (!board) return;
-        console.log("[load] Board collaborators from Firestore:", board.collaborators);
         set({
           currentBoardId: board.id,
           boardTitle: board.title,
@@ -509,8 +508,6 @@ export const useBoardStore = create<BoardState>()(
         set({ saveStatus: "saving" });
         lastSaveTime = Date.now();
         lastSavedUpdatedAt = Date.now();
-        console.log("[save] email:", user.email, "| uid:", user.uid, "| boardId:", state.currentBoardId);
-        console.log("[save] collaborators in store:", state.collaborators);
         try {
           // Strip undefined values and base64 imageData from boxData.
           // updateDoc rejects undefined values, so we must remove them entirely.
@@ -530,7 +527,6 @@ export const useBoardStore = create<BoardState>()(
             updatedAt: saveTimestamp,
           });
           lastSavedUpdatedAt = saveTimestamp;
-          console.log("[save] SUCCESS | updatedAt:", saveTimestamp, "| user:", user.email);
           set({ saveStatus: "saved" });
         } catch (err) {
           console.error("Firestore save failed:", err);
@@ -602,7 +598,7 @@ export const useBoardStore = create<BoardState>()(
         const state = get();
         if (!state.currentBoardId) return;
         const boardId = state.currentBoardId;
-        console.log("[store] Subscribing to board updates:", boardId);
+
 
         // Subscribe to board document changes (real-time sync)
         boardUnsub = subscribeToBoard(boardId, (board) => {
@@ -610,9 +606,7 @@ export const useBoardStore = create<BoardState>()(
           // If they match, this is our own save echoing back — skip it.
           // If they differ, it's another user's update — apply it.
           const isEcho = board.updatedAt === lastSavedUpdatedAt;
-          console.log("[sync] onSnapshot | board.updatedAt:", board.updatedAt, "| myLastSaved:", lastSavedUpdatedAt, "| isEcho:", isEcho, "| me:", useAuthStore.getState().user?.email);
           if (isEcho) return;
-          console.log("[sync] Applying remote update | nodes:", board.nodes?.length, "| edges:", board.edges?.length);
           set({
             nodes: board.nodes as Node[],
             edges: board.edges as Edge[],
