@@ -14,6 +14,11 @@
  * SVG circle: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/circle
  * JavaScript Array includes: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes
  * SVG path: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/path 
+ * TypeScript Partial utility type: https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype
+ * TypeScript unknown type and type assertions: https://www.typescriptlang.org/docs/handbook/2/functions.html#unknown
+ * JavaScript JSON.parse: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse
+ * JavaScript Array.isArray: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
+ * JavaScript try...catch: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
 */
 
 import { memo, useState, useRef, useEffect, lazy, Suspense } from "react";
@@ -76,14 +81,53 @@ interface EdgeCaseItem {
 //This converts the Ai's JSON output into an array of edge cases.
 function parseEdgeCases(output: string): EdgeCaseItem[] {
   try {
-    const cleaned = output
+    // Removes spaces and possible Markdown code markers.
+    const cleanedOutput = output
       .trim()
       .replace(/^```json\s*/i, "")
       .replace(/\s*```$/, "");
 
-    const result = JSON.parse(cleaned);
-    return Array.isArray(result.edgeCases) ? result.edgeCases : [];
+    // Converts the JSON text into a JavaScript object.
+    const parsedOutput = JSON.parse(cleanedOutput);
+
+    // Returns an empty list if edgeCases is missing or is not an array.
+    if (!Array.isArray(parsedOutput.edgeCases)) {
+      return [];
+    }
+
+    // Adds a fallback value if the AI leaves out any fields.
+    return parsedOutput.edgeCases.map((edgeCase: unknown) => {
+      // Makes sure the edge case is an object before reading it.
+      const item =
+        edgeCase && typeof edgeCase === "object"
+          ? (edgeCase as Partial<EdgeCaseItem>)
+          : {};
+
+      const validSeverities = ["Low", "Medium", "High", "Critical"];
+
+      // Uses Medium if severity is missing or invalid.
+      const severity = validSeverities.includes(item.severity ?? "")
+        ? item.severity
+        : "Medium";
+
+      return {
+        category: item.category || "General",
+        edgeCase: item.edgeCase || "Unnamed edge case",
+        trigger: item.trigger || "Trigger not provided",
+        severity: severity as EdgeCaseItem["severity"],
+        systemResponse:
+          item.systemResponse || "System response not provided",
+        recoveryAction:
+          item.recoveryAction || "Please try again or contact support",
+        userMessage:
+          item.userMessage || "Something went wrong. Please try again.",
+        accessibility:
+          item.accessibility ||
+          "Announce the message clearly to screen-reader users",
+      };
+    });
   } catch {
+    // Invalid JSON returns an empty list instead of crashing the box.
     return [];
   }
 }
