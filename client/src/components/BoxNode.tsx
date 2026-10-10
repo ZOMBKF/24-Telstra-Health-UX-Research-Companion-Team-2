@@ -139,14 +139,14 @@ function getSeverityStyle(severity: EdgeCaseItem["severity"]): string {
   }
 
   if (severity === "High") {
-    return "bg-red-100 text-red-700";
+    return "bg-red-100 text-red-800";
   }
 
   if (severity === "Medium") {
-    return "bg-yellow-100 text-yellow-700";
+    return "bg-amber-100 text-amber-900";
   }
 
-  return "bg-green-100 text-green-700";
+  return "bg-green-100 text-green-800";
 }
 
 // Choose the left-border colour of each edge-case card.
@@ -204,6 +204,22 @@ function resizeImage(file: File, maxSize = 1024): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+
+
+const LOADING_STAGES = [
+  {
+    title: "Analysing your feature idea...",
+    detail: "Reviewing the input and identifying the main user flow.",
+  },
+  {
+    title: "Identifying potential edge cases...",
+    detail: "Exploring possible errors, exceptions and accessibility issues.",
+  },
+  {
+    title: "Preparing your results...",
+    detail: "Organising edge cases for review.",
+  },
+];
 
 function BoxNode({ id, data, selected, type }: NodeProps) {
   const boxType = (data.boxType || type) as BoxType;
@@ -324,6 +340,39 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   useEffect(() => {
     setDismissedEdgeCaseIndexes([]);
   }, [boxData?.output]);
+
+
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [statusAnnouncement, setStatusAnnouncement] = useState("");
+  const edgeCaseRunning = boxType === "edge_case" && boxData?.status === "running";
+
+  useEffect(() => {
+    if (!edgeCaseRunning) {
+      setLoadingStage(0);
+      return;
+    }
+
+    setLoadingStage(0);
+    const timer = setInterval(() => {
+      setLoadingStage((stage) =>
+        stage < LOADING_STAGES.length - 1 ? stage + 1 : stage
+      );
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [edgeCaseRunning]);
+
+  useEffect(() => {
+    if (boxType !== "edge_case") return;
+
+    if (boxData?.status === "done" && boxData.output) {
+      setStatusAnnouncement("Edge cases are ready.");
+    } else if (boxData?.status === "error") {
+      setStatusAnnouncement("Couldn't generate edge cases. Please try again.");
+    } else if (boxData?.status === "running") {
+      setStatusAnnouncement("");
+    }
+  }, [boxType, boxData?.status, boxData?.output]);
 
   if (!boxData) return null;
 
@@ -1144,20 +1193,39 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           {/* Display the Edge Case Box loading, error, ready and result states */}
           {!isInputBox && isEdgeCase && (
             <div className="min-h-[80px]">
+              <div className="sr-only" aria-live="polite" aria-atomic="true">
+                {statusAnnouncement}
+              </div>
+
               {isRunning && (
-                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
-                  <div className="h-14 w-14 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
+                <div
+                  className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <div
+                    className="h-14 w-14 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
+                    aria-hidden="true"
+                  />
+                  <div className="flex items-center gap-2 text-sm font-medium text-slate-800" aria-hidden="true">
+                    {LOADING_STAGES.map((_, index) => (
+                      <span key={index} className={index <= loadingStage ? "text-slate-900" : "text-slate-300"}>
+                        {index <= loadingStage ? "●" : "○"}
+                      </span>
+                    ))}
+                    <span>Step {loadingStage + 1} of 3</span>
+                  </div>
                   <p className="text-base font-semibold text-slate-900">
-                    Generating Edge Cases...
+                    {LOADING_STAGES[loadingStage].title}
                   </p>
                   <p className="text-sm text-slate-600">
-                    Please wait while we analyse your idea
+                    {LOADING_STAGES[loadingStage].detail}
                   </p>
                 </div>
               )}
 
               {hasError && !isRunning && (
-                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center" role="alert">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-3xl font-bold text-white">
                     !
                   </div>
@@ -1177,13 +1245,13 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                     <div
                       key={index}
                       className={
-                        "rounded-md border border-slate-200 border-l-4 bg-white p-3 shadow-sm " +
+                        "rounded-md border border-slate-200 border-l-4 bg-white p-4 shadow-sm " +
                         getSeverityBorder(item.severity)
                       }
                     >
                       <div className="flex items-start justify-between gap-3">
                         {/* Edge-case title */}
-                        <strong className="text-sm text-slate-800">
+                        <strong className="text-lg font-semibold text-slate-900">
                           {item.edgeCase}
                         </strong>
 
@@ -1203,7 +1271,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                           <button
                             type="button"
                             onClick={() => handleCopyEdgeCase(item, index)}
-                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                            className="nodrag flex h-8 w-8 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                             title="Copy edge case"
                             aria-label={`Copy ${item.edgeCase}`}
                           >
@@ -1241,7 +1309,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                           <button
                             type="button"
                             onClick={() => handleDismissEdgeCase(index)}
-                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                            className="nodrag flex h-8 w-8 items-center justify-center rounded text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                             title="Dismiss edge case"
                             aria-label={`Dismiss ${item.edgeCase}`}
                           >
@@ -1277,12 +1345,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                       </div>
 
                       {/* Category */}
-                      <p className="mt-1 text-xs font-medium text-red-500">
+                      <p className="mt-1 text-sm font-medium text-red-700">
                         {item.category}
                       </p>
 
                       {/* Main information */}
-                      <div className="mt-2 space-y-1 text-xs leading-relaxed text-slate-600">
+                      <div className="mt-2 space-y-1.5 text-sm leading-relaxed text-slate-700">
                         <p>
                           <strong className="text-slate-700">Trigger:</strong>{" "}
                           {item.trigger}
@@ -1300,12 +1368,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                       </div>
 
                       {/* Highlighted message shown to the user */}
-                      <div className="mt-2 rounded bg-blue-50 px-2 py-1.5 text-xs text-blue-700">
+                      <div className="mt-2 rounded bg-blue-50 px-3 py-2 text-sm text-blue-800">
                         <strong>User message:</strong> “{item.userMessage}”
                       </div>
 
                       {/* Accessibility information */}
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-sm text-slate-600">
                         <strong>Accessibility:</strong> {item.accessibility}
                       </p>
                     </div>
