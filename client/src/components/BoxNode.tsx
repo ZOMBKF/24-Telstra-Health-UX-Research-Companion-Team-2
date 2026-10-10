@@ -139,14 +139,14 @@ function getSeverityStyle(severity: EdgeCaseItem["severity"]): string {
   }
 
   if (severity === "High") {
-    return "bg-red-100 text-red-700";
+    return "bg-red-100 text-red-800";
   }
 
   if (severity === "Medium") {
-    return "bg-yellow-100 text-yellow-700";
+    return "bg-amber-100 text-amber-900";
   }
 
-  return "bg-green-100 text-green-700";
+  return "bg-green-100 text-green-800";
 }
 
 // Choose the left-border colour of each edge-case card.
@@ -1177,13 +1177,13 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                     <div
                       key={index}
                       className={
-                        "rounded-md border border-slate-200 border-l-4 bg-white p-3 shadow-sm " +
+                        "rounded-md border border-slate-200 border-l-4 bg-white p-4 shadow-sm " +
                         getSeverityBorder(item.severity)
                       }
                     >
                       <div className="flex items-start justify-between gap-3">
                         {/* Edge-case title */}
-                        <strong className="text-sm text-slate-800">
+                        <strong className="text-lg font-semibold text-slate-900">
                           {item.edgeCase}
                         </strong>
 
@@ -1203,7 +1203,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                           <button
                             type="button"
                             onClick={() => handleCopyEdgeCase(item, index)}
-                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                            className="nodrag flex h-8 w-8 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                             title="Copy edge case"
                             aria-label={`Copy ${item.edgeCase}`}
                           >
@@ -1241,7 +1241,7 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                           <button
                             type="button"
                             onClick={() => handleDismissEdgeCase(index)}
-                            className="nodrag flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                            className="nodrag flex h-8 w-8 items-center justify-center rounded text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                             title="Dismiss edge case"
                             aria-label={`Dismiss ${item.edgeCase}`}
                           >
@@ -1277,12 +1277,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                       </div>
 
                       {/* Category */}
-                      <p className="mt-1 text-xs font-medium text-red-500">
+                      <p className="mt-1 text-sm font-medium text-red-700">
                         {item.category}
                       </p>
 
                       {/* Main information */}
-                      <div className="mt-2 space-y-1 text-xs leading-relaxed text-slate-600">
+                      <div className="mt-2 space-y-1.5 text-sm leading-relaxed text-slate-700">
                         <p>
                           <strong className="text-slate-700">Trigger:</strong>{" "}
                           {item.trigger}
@@ -1300,12 +1300,12 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
                       </div>
 
                       {/* Highlighted message shown to the user */}
-                      <div className="mt-2 rounded bg-blue-50 px-2 py-1.5 text-xs text-blue-700">
+                      <div className="mt-2 rounded bg-blue-50 px-3 py-2 text-sm text-blue-800">
                         <strong>User message:</strong> “{item.userMessage}”
                       </div>
 
                       {/* Accessibility information */}
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-sm text-slate-600">
                         <strong>Accessibility:</strong> {item.accessibility}
                       </p>
                     </div>
