@@ -205,6 +205,22 @@ function resizeImage(file: File, maxSize = 1024): Promise<string> {
   });
 }
 
+
+const LOADING_STAGES = [
+  {
+    title: "Analysing your feature idea...",
+    detail: "Reviewing the input and identifying the main user flow.",
+  },
+  {
+    title: "Identifying potential edge cases...",
+    detail: "Exploring possible errors, exceptions and accessibility issues.",
+  },
+  {
+    title: "Preparing your results...",
+    detail: "Organising edge cases for review.",
+  },
+];
+
 function BoxNode({ id, data, selected, type }: NodeProps) {
   const boxType = (data.boxType || type) as BoxType;
   // Custom boxes: the base meta is a fallback — instances carry their own
@@ -324,6 +340,39 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
   useEffect(() => {
     setDismissedEdgeCaseIndexes([]);
   }, [boxData?.output]);
+
+
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [statusAnnouncement, setStatusAnnouncement] = useState("");
+  const edgeCaseRunning = boxType === "edge_case" && boxData?.status === "running";
+
+  useEffect(() => {
+    if (!edgeCaseRunning) {
+      setLoadingStage(0);
+      return;
+    }
+
+    setLoadingStage(0);
+    const timer = setInterval(() => {
+      setLoadingStage((stage) =>
+        stage < LOADING_STAGES.length - 1 ? stage + 1 : stage
+      );
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [edgeCaseRunning]);
+
+  useEffect(() => {
+    if (boxType !== "edge_case") return;
+
+    if (boxData?.status === "done" && boxData.output) {
+      setStatusAnnouncement("Edge cases are ready.");
+    } else if (boxData?.status === "error") {
+      setStatusAnnouncement("Couldn't generate edge cases. Please try again.");
+    } else if (boxData?.status === "running") {
+      setStatusAnnouncement("");
+    }
+  }, [boxType, boxData?.status, boxData?.output]);
 
   if (!boxData) return null;
 
@@ -1144,20 +1193,39 @@ function BoxNode({ id, data, selected, type }: NodeProps) {
           {/* Display the Edge Case Box loading, error, ready and result states */}
           {!isInputBox && isEdgeCase && (
             <div className="min-h-[80px]">
+              <div className="sr-only" aria-live="polite" aria-atomic="true">
+                {statusAnnouncement}
+              </div>
+
               {isRunning && (
-                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
-                  <div className="h-14 w-14 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
+                <div
+                  className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <div
+                    className="h-14 w-14 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
+                    aria-hidden="true"
+                  />
+                  <div className="flex items-center gap-2 text-sm font-medium text-slate-800" aria-hidden="true">
+                    {LOADING_STAGES.map((_, index) => (
+                      <span key={index} className={index <= loadingStage ? "text-slate-900" : "text-slate-300"}>
+                        {index <= loadingStage ? "●" : "○"}
+                      </span>
+                    ))}
+                    <span>Step {loadingStage + 1} of 3</span>
+                  </div>
                   <p className="text-base font-semibold text-slate-900">
-                    Generating Edge Cases...
+                    {LOADING_STAGES[loadingStage].title}
                   </p>
                   <p className="text-sm text-slate-600">
-                    Please wait while we analyse your idea
+                    {LOADING_STAGES[loadingStage].detail}
                   </p>
                 </div>
               )}
 
               {hasError && !isRunning && (
-                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center">
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center" role="alert">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-3xl font-bold text-white">
                     !
                   </div>
