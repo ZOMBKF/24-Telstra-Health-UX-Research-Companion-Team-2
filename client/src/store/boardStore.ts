@@ -791,9 +791,16 @@ export const useBoardStore = create<BoardState>()(
               namedInputs
             );
 
+            // Uses shorter and more predictable responses for the Edge Case Box
+            const isEdgeCaseBox = boxType === "edge_case";
+
             const result = await generate({
               systemPrompt: data.systemPrompt,
               userPrompt: filledPrompt,
+
+              // These settings are only sent for the Edge Case Box
+              temperature: isEdgeCaseBox ? 0.2 : undefined,
+              numPredict: isEdgeCaseBox ? 2048 : undefined,
             });
 
             if (result.error) throw new Error(result.error);
@@ -818,7 +825,6 @@ export const useBoardStore = create<BoardState>()(
 
             // Checks which type of box is currently running.
             const isSwotBox = boxType === "swot";
-            const isEdgeCaseBox = boxType === "edge_case";
 
             // SWOT and Edge Case boxes both save the AI response as text.
             // The Edge Case JSON is formatted later in BoxNode.tsx.

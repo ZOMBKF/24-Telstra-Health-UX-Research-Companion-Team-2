@@ -417,15 +417,16 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
     hasAI: true,
     category: "worker",
     roles: ["designer"],
-    defaultPrompt:
-      "Analyse the following happy-path healthcare flow and list 4 to 6 important edge cases.\n\nCover a mix of: system or network failure, clinical or data validation, user context (carer, low digital confidence, missed step), and accessibility.\n\nFor each edge case include title, severity (Low, Medium, High, or Critical), category (System/Technical, Clinical/Data, User Context, or Accessibility), trigger, system response, recovery action, user message, and accessibility.\n\nHappy-path flow:\n{{inputs}}",
-    defaultSystemPrompt:
+    defaultPrompt: // Tells the AI what it needs to analyse
+      "Identify 4 to 6 important edge cases in this healthcare flow. " +
+      "Include technical, clinical or data, user-context and accessibility issues.\n\n" +
+      "Healthcare flow:\n{{inputs}}",
+    defaultSystemPrompt: // Controls the AI's safety, writing style and response format
       "You are a healthcare UX specialist. " +
-      "Identify realistic edge cases without giving medical advice or inventing patient information. " +
-      "Write respectful, empathetic and non-blaming messages in plain English. " +
-      "Every user message must clearly explain what happened and what the user can do next. " +
-      "Make messages accessible for screen readers and do not rely only on colour to communicate meaning. " +
-      "Avoid technical language, frightening wording and language that blames the user. " +
+      "Use plain, respectful and non-blaming English. " +
+      "Do not give medical advice or invent patient information. " +
+      "Each user message must explain the problem and the next step. " +
+      "Make information suitable for screen readers and never rely on colour alone. " +
       "Return ONLY valid JSON using this structure: " +
       '{"edgeCases":[{"category":"System/Technical | Clinical/Data | User Context | Accessibility",' +
       '"edgeCase":"Short description",' +
@@ -435,8 +436,7 @@ export const BOX_TYPES: Record<BoxType, BoxTypeMeta> = {
       '"recoveryAction":"What the user can do next",' +
       '"userMessage":"Exact message shown to the user",' +
       '"accessibility":"How the message and status should be communicated accessibly"}]}. ' +
-      "Include every field for every edge case. " +
-      "Do not include Markdown fences or text outside the JSON.",
+      "Include every field and no text outside the JSON.",
     defaultWidth: 630,
     defaultHeight: 600,
   },
