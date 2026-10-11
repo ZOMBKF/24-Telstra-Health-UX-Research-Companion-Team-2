@@ -3,6 +3,9 @@ const API_BASE = "/api";
 export interface GenerateRequest {
   systemPrompt: string;
   userPrompt: string;
+  // Optional AI settings used by certain boxes
+  temperature?: number;
+  numPredict?: number;
 }
 
 export interface TokenUsage {
@@ -123,7 +126,7 @@ export async function pollStitchJob(
   const maxWaitMs = opts.maxWaitMs ?? 10 * 60 * 1000; // 10 min safety ceiling
   const deadline = Date.now() + maxWaitMs;
 
-  for (;;) {
+  for (; ;) {
     const status = await readStitchJob(jobId);
     if (status.status === "done") {
       if (!status.html) throw new Error("Stitch finished but returned no HTML.");

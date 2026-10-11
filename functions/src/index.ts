@@ -67,11 +67,14 @@ app.use(express.json({ limit: "10mb" }));
 
 app.post("/api/generate", async (req, res) => {
   try {
-    const { systemPrompt, userPrompt } = req.body as { systemPrompt?: string; userPrompt?: string };
+    const { systemPrompt, userPrompt, temperature, numPredict, } = req.body as {
+      systemPrompt?: string; userPrompt?: string, temperature?: number;
+      numPredict?: number;
+    };
     if (!userPrompt || typeof userPrompt !== "string") {
       return res.status(400).json({ error: "userPrompt is required" });
     }
-    const result = await generateContent(systemPrompt || "You are a helpful assistant.", userPrompt);
+    const result = await generateContent(systemPrompt || "You are a helpful assistant.", userPrompt, { temperature, numPredict, });
     res.json({
       content: result.content,
       model: result.model,
